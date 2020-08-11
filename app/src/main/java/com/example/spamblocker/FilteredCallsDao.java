@@ -22,6 +22,9 @@ public interface FilteredCallsDao {
     @Query("UPDATE filteredcalls set whitelisted = :wl where recid = :id")
     void updateTest(int wl, int id);
 
+    @Query("UPDATE filteredcalls set calltime = :newTime where recid = :id")
+    void updateCallTime(String newTime, int id);
+
     @Insert
     void insert(FilteredCalls call);
 

@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         List<FilteredCalls> calls = db.callsDao().getAll();
         setupCallList(calls);
         setupNuke();
+        setupRefreshBtn();
        //id.setText(test);
     }
 
@@ -54,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
             btnSetWhiteList.setId(View.generateViewId());
             setCallListLayoutAndListeners(mainCallLayout, callInfo, callTime, btnSetWhiteList);
             setupSwitchToggle(btnSetWhiteList, item.recID);
+            if (item.whitelisted == 1) {
+                btnSetWhiteList.setChecked(true);
+            }
         }
     }
     private void setupNuke() {
@@ -114,7 +118,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+    private void setupRefreshBtn() {
+        Button btnRefresh = (Button)findViewById(R.id.refreshData);
+        btnRefresh.setText("Refresh Data");
+        btnRefresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+                startActivity(getIntent());
+            }
+        });
+    }
     private void nukeDB() {
         db.callsDao().nukeDB();
         finish();

@@ -61,6 +61,8 @@ public class ServiceReceiver extends BroadcastReceiver {
         for (FilteredCalls item : allCalls) {
             if (incomingNumber.equals(item.number)) {
                 callerExistsInDB = true;
+                String updatedTime = Calendar.getInstance().getTime().toString();
+                db.callsDao().updateCallTime(updatedTime, item.recID);
             }
         }
         ContentResolver contentResolver = con.getContentResolver();
@@ -92,7 +94,7 @@ public class ServiceReceiver extends BroadcastReceiver {
         List<FilteredCalls> whiteList = db.callsDao().getWhiteList(1, 0);
         boolean isWhitelisted = false;
         for (FilteredCalls item : whiteList) {
-            if (item.number == incomingNumber) {
+            if (item.number.equals(incomingNumber)) {
                 isWhitelisted = true;
             }
 

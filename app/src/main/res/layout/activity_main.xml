@@ -22,12 +22,20 @@
             android:layout_gravity="center_horizontal"
             android:text="Clear DB" />
 
+        <Button
+            android:id="@+id/refreshData"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="0" />
+
     </LinearLayout>>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="25dp"
+        android:layout_marginTop="25dp"
         android:maxHeight="400dp">
 
         <LinearLayout
