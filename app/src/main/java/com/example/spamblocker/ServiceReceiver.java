@@ -1,6 +1,7 @@
 package com.example.spamblocker;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -13,6 +14,7 @@ import android.provider.ContactsContract;
 import android.telecom.TelecomManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
@@ -23,31 +25,34 @@ import java.util.List;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.room.Room;
 
 public class ServiceReceiver extends BroadcastReceiver {
     private SpamBlockerDB db;
+    boolean blocked = false;
 
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void onReceive(final Context con, Intent intent) {
 
+        String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+        String inc = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
 
-        final TelephonyManager telephony = (TelephonyManager) con.getSystemService(Context.TELEPHONY_SERVICE);
-        telephony.listen(new PhoneStateListener() {
-            @RequiresApi(api = Build.VERSION_CODES.P)
-            @Override
-            public void onCallStateChanged(int state, String incomingNumber) {
-                super.onCallStateChanged(state, incomingNumber);
-                //Toast.makeText(con, incomingNumber, Toast.LENGTH_LONG).show();
-                if (TelephonyManager.CALL_STATE_RINGING == state) {
-                    checkIfNumberInContacts(con, incomingNumber, telephony);
-                }
+        if (state.equals(TelephonyManager.EXTRA_STATE_RINGING) && inc != null) {
+            String incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
+            blocked = checkIfNumberInContacts(con, incomingNumber);
+
+            if (blocked) {
+                buildNotification(con);
             }
-        }, PhoneStateListener.LISTEN_CALL_STATE);
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    public void checkIfNumberInContacts(Context con, String incomingNumber, TelephonyManager telephony) {
+    public boolean checkIfNumberInContacts(Context con, String incomingNumber) {
+        boolean wasBlocked = false;
+
         db = Room.databaseBuilder(con, SpamBlockerDB.class, "spamblocker.db").createFromAsset("databases/spamblocker.db").allowMainThreadQueries().build();
 
         FilteredCalls call = new FilteredCalls();
@@ -55,20 +60,25 @@ public class ServiceReceiver extends BroadcastReceiver {
         call.deleted = 0;
         call.number = incomingNumber;
         call.whitelisted = 0;
+        call.callcount = 1;
 
         List<FilteredCalls> allCalls = db.callsDao().getAll();
         boolean callerExistsInDB = false;
         for (FilteredCalls item : allCalls) {
+
             if (incomingNumber.equals(item.number)) {
                 callerExistsInDB = true;
                 String updatedTime = Calendar.getInstance().getTime().toString();
                 db.callsDao().updateCallTime(updatedTime, item.recID);
             }
+
+                int currentCount = db.callsDao().getCallCount(item.recID);
+                db.callsDao().updateCallCount(currentCount + 1, item.recID);
         }
+
         ContentResolver contentResolver = con.getContentResolver();
         Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(incomingNumber));
 
-        //contentResolver.query(uri, new String[] {ContactsContract.PhoneLookup.HAS_PHONE_NUMBER}, null, null);
         String contact = "";
 
         Cursor c = contentResolver.query(uri, new String[]{ContactsContract.PhoneLookup.HAS_PHONE_NUMBER}, null, null);
@@ -83,10 +93,12 @@ public class ServiceReceiver extends BroadcastReceiver {
         if (contact == "" && !checkIfNumberIsWhitelisted(con, incomingNumber)) {
             TelecomManager telecomManager = (TelecomManager) con.getSystemService(Context.TELECOM_SERVICE);
             telecomManager.endCall();
+            wasBlocked = true;
             if (!callerExistsInDB) {
                 db.callsDao().insert(call);
             }
         }
+        return wasBlocked;
     }
 
     public boolean checkIfNumberIsWhitelisted(Context con, String incomingNumber) {
@@ -104,4 +116,14 @@ public class ServiceReceiver extends BroadcastReceiver {
 
     }
 
+    public void buildNotification(Context con) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(con, Global.BLOCKED_CALL_CHANNEL_ID)
+                .setSmallIcon(R.drawable.notification_icons)
+                .setContentTitle("An unknown number has been blocked.")
+                .setContentText("Tap here to see more information.")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManager notificationManager = (NotificationManager) con.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(3030, builder.build());
+    }
 }

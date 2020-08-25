@@ -13,6 +13,9 @@ public interface FilteredCallsDao {
     @Query("SELECT * FROM FilteredCalls")
     List<FilteredCalls> getAll();
 
+    @Query("SELECT * FROM FilteredCalls where recID = :id")
+    FilteredCalls getByRecID(int id);
+
     @Query("SELECT * FROM filteredcalls WHERE whitelisted = :wl and deleted = :del")
     List<FilteredCalls> getWhiteList(int wl, int del);
 
@@ -25,9 +28,15 @@ public interface FilteredCallsDao {
     @Query("UPDATE filteredcalls set calltime = :newTime where recid = :id")
     void updateCallTime(String newTime, int id);
 
+    @Query("UPDATE FILTEREDCALLS set callcount = :count where recid = :id")
+    void updateCallCount(int count, int id);
+
     @Insert
     void insert(FilteredCalls call);
 
     @Query("DELETE FROM FilteredCalls")
     void nukeDB();
+
+    @Query("SELECT callcount FROM FilteredCalls where recID = :id")
+    Integer getCallCount(int id);
 }
