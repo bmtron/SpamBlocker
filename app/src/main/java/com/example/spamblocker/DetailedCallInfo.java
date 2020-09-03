@@ -13,15 +13,16 @@ import org.w3c.dom.Text;
 
 public class DetailedCallInfo extends AppCompatActivity {
     private SpamBlockerDB db;
-    private int recid;
+    private String number;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detailed_call_info);
         Intent intent = getIntent();
-        recid = (int) intent.getExtras().get("incoming_recid");
+        number = intent.getStringExtra("number");
         db = Room.databaseBuilder(getApplicationContext(), SpamBlockerDB.class, "spamblocker.db").createFromAsset("databases/spamblocker.db").allowMainThreadQueries().build();
-        getAndDisplayCallData(recid);
+        getAndDisplayCallData(number);
         Button mainScreen = (Button) findViewById(R.id.backToMain);
         setupBackButton(mainScreen);
     }
@@ -37,9 +38,13 @@ public class DetailedCallInfo extends AppCompatActivity {
         });
     }
 
-    private void getAndDisplayCallData(int recid) {
-        FilteredCalls data = db.callsDao().getByRecID(recid);
-        TextView temp = (TextView) findViewById(R.id.tempText);
-        temp.setText(data.number);
+    private void getAndDisplayCallData(String number) {
+        FilteredCalls data = db.callsDao().getCallByNumber(number);
+        TextView numberText = (TextView) findViewById(R.id.phoneNumber);
+        TextView callTimeText = (TextView) findViewById(R.id.lastCallDate);
+        TextView callCountText = (TextView) findViewById(R.id.callCountText);
+        numberText.setText(data.number);
+        callTimeText.setText(data.calltime);
+        callCountText.setText(data.callcount.toString());
     }
 }

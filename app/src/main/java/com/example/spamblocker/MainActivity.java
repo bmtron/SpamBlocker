@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             callTime.setText(item.calltime);
             callCount.setText(item.callcount.toString());
             btnSetWhiteList.setId(View.generateViewId());
-            setCallListLayoutAndListeners(mainCallLayout, callInfo, callTime, btnSetWhiteList, callCount, item.recID);
+            setCallListLayoutAndListeners(mainCallLayout, callInfo, callTime, btnSetWhiteList, callCount, item.number);
             setupSwitchToggle(btnSetWhiteList, item.recID);
             if (item.whitelisted == 1) {
                 btnSetWhiteList.setChecked(true);
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         callCount.setLayoutParams(params);
     }
-    private void setCallListLayoutAndListeners(RelativeLayout mainCallLayout, TextView callInfo, TextView callTime, Switch btnSetWhiteList, TextView callCount, int recid) {
+    private void setCallListLayoutAndListeners(RelativeLayout mainCallLayout, TextView callInfo, TextView callTime, Switch btnSetWhiteList, TextView callCount, String number) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 200);
         params.setMargins(0, 10, 0, 10);
         LinearLayout linL = (LinearLayout) findViewById(R.id.LinearLayout_List);
@@ -121,15 +121,15 @@ public class MainActivity extends AppCompatActivity {
         setupCallTimeTextView(callTime);
         setupCallCountLayout(callCount);
         setupWhitelistSwitchLayout(btnSetWhiteList);
-        setupCallTouch(mainCallLayout, recid);
+        setupCallTouch(mainCallLayout, number);
     }
 
-    private void setupCallTouch(RelativeLayout mainCallLayout, final int recid) {
+    private void setupCallTouch(RelativeLayout mainCallLayout, final String number) {
         mainCallLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 Intent toDetails = new Intent(getApplicationContext(), DetailedCallInfo.class);
-                toDetails.putExtra("incoming_recid", recid);
+                toDetails.putExtra("number", number);
                 startActivity(toDetails);
                 finish();
                 return false;

@@ -2,6 +2,7 @@ package com.example.spamblocker;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -20,6 +21,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 
@@ -44,7 +46,7 @@ public class ServiceReceiver extends BroadcastReceiver {
             blocked = checkIfNumberInContacts(con, incomingNumber);
 
             if (blocked) {
-                buildNotification(con);
+                buildNotification(con, incomingNumber);
             }
         }
     }
@@ -55,8 +57,9 @@ public class ServiceReceiver extends BroadcastReceiver {
 
         db = Room.databaseBuilder(con, SpamBlockerDB.class, "spamblocker.db").createFromAsset("databases/spamblocker.db").allowMainThreadQueries().build();
 
+        SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy hh:mm");
         FilteredCalls call = new FilteredCalls();
-        call.calltime = Calendar.getInstance().getTime().toString();
+        call.calltime = formatter.format(Calendar.getInstance().getTime());
         call.deleted = 0;
         call.number = incomingNumber;
         call.whitelisted = 0;
@@ -70,10 +73,9 @@ public class ServiceReceiver extends BroadcastReceiver {
                 callerExistsInDB = true;
                 String updatedTime = Calendar.getInstance().getTime().toString();
                 db.callsDao().updateCallTime(updatedTime, item.recID);
-            }
-
                 int currentCount = db.callsDao().getCallCount(item.recID);
                 db.callsDao().updateCallCount(currentCount + 1, item.recID);
+            }
         }
 
         ContentResolver contentResolver = con.getContentResolver();
@@ -116,11 +118,19 @@ public class ServiceReceiver extends BroadcastReceiver {
 
     }
 
-    public void buildNotification(Context con) {
+    public void buildNotification(Context con, String incomingNumber) {
+        Intent intent = new Intent(con, DetailedCallInfo.class);
+        intent.putExtra("number", incomingNumber);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(con, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(con, Global.BLOCKED_CALL_CHANNEL_ID)
                 .setSmallIcon(R.drawable.notification_icons)
-                .setContentTitle("An unknown number has been blocked.")
+                .setContentTitle("An unknown number " + incomingNumber + " has been blocked.")
                 .setContentText("Tap here to see more information.")
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         NotificationManager notificationManager = (NotificationManager) con.getSystemService(Context.NOTIFICATION_SERVICE);

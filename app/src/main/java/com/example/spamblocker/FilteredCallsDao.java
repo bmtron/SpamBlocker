@@ -22,6 +22,9 @@ public interface FilteredCallsDao {
     @Query("SELECT * FROM FilteredCalls WHERE deleted = 0")
     List<FilteredCalls> getAllExceptDeleted();
 
+    @Query("SELECT * FROM FilteredCalls where number = :number")
+    FilteredCalls getCallByNumber(String number);
+
     @Query("UPDATE filteredcalls set whitelisted = :wl where recid = :id")
     void updateTest(int wl, int id);
 
@@ -39,4 +42,6 @@ public interface FilteredCallsDao {
 
     @Query("SELECT callcount FROM FilteredCalls where recID = :id")
     Integer getCallCount(int id);
+
+
 }
