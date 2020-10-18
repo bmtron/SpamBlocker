@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         setupCallList(calls);
         setupNuke();
         setupRefreshBtn();
+        setupAddManualButton();
         createNotificationChannel();
     }
 
@@ -151,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     private void setupRefreshBtn() {
-        Button btnRefresh = (Button)findViewById(R.id.refreshData);
+        Button btnRefresh = (Button) findViewById(R.id.refreshData);
         btnRefresh.setText("Refresh Data");
         btnRefresh.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -161,6 +162,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void setupAddManualButton() {
+        Button btnAdd = (Button) findViewById(R.id.btnAddManually);
+        btnAdd.setText("+");
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent goToManualAdd = new Intent(MainActivity.this, ManualAdd.class);
+                startActivity(goToManualAdd);
+                finish();
+            }
+        });
+    }
+
     private void nukeDB() {
         db.callsDao().nukeDB();
         finish();
